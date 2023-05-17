@@ -13,11 +13,14 @@ Servo esc2;
 Servo esc3;
 Servo esc4;
 
-int speed = 1000;
+int minSpeed = 1000;
+int maxSpeed = 2000;
+int speed = minSpeed;
 
 void setup() {
   Serial.begin(9600);
   HC05.begin(9600);
+  time = millis();
   initializeESC();
 }
 
@@ -37,20 +40,12 @@ void readBluetooth()
 
 void messageHandler(int message)
 {
-
-  Serial.println("Message:");
-  Serial.println(message);
-
   speed = message;
-  if (speed < 1000)
-    speed = 1000;
+  if (speed < minSpeed)
+    speed = minSpeed;
 
-  if (speed > 2000)
-    speed = 2000;
-
-  Serial.println("Speed:");
-  Serial.println(speed);
-  Serial.println("\n");
+  if (speed > maxSpeed)
+    speed = maxSpeed;
 }
 
 void initializeESC()
@@ -62,27 +57,27 @@ void initializeESC()
   esc4.attach(pinESC4);
 
   // max
-  esc1.write(2000);
-  esc2.write(2000);
-  esc3.write(2000);
-  esc4.write(2000);
+  // esc1.write(maxSpeed);
+  // esc2.write(maxSpeed);
+  // esc3.write(maxSpeed);
+  // esc4.write(maxSpeed);
 
-  delay(5000);
+  // delay(7000);
 
   // min
-  esc1.write(1000);
-  esc2.write(1000);
-  esc3.write(1000);
-  esc4.write(1000);
+  esc1.writeMicroseconds(minSpeed);
+  esc2.writeMicroseconds(minSpeed);
+  esc3.writeMicroseconds(minSpeed);
+  esc4.writeMicroseconds(minSpeed);
 
-  delay(5000);
+  delay(7000);
 }
 
 
 void setSpeed()
 {
-  esc1.write(speed);
-  esc2.write(speed);
-  esc3.write(speed);
-  esc4.write(speed);
+  esc1.writeMicroseconds(speed);
+  esc2.writeMicroseconds(speed);
+  esc3.writeMicroseconds(speed);
+  esc4.writeMicroseconds(speed);
 }
