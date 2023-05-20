@@ -1,10 +1,10 @@
 #include <SoftwareSerial.h>
 #include <Servo.h>
 
-#define pinESC1 7
-#define pinESC2 8
-#define pinESC3 9
-#define pinESC4 10
+#define pinESC1 8
+#define pinESC2 9
+#define pinESC3 10
+#define pinESC4 11
 
 SoftwareSerial HC05(0, 1);
 
@@ -20,7 +20,6 @@ int speed = minSpeed;
 void setup() {
   Serial.begin(9600);
   HC05.begin(9600);
-  time = millis();
   initializeESC();
 }
 
@@ -57,12 +56,12 @@ void initializeESC()
   esc4.attach(pinESC4);
 
   // max
-  // esc1.write(maxSpeed);
-  // esc2.write(maxSpeed);
-  // esc3.write(maxSpeed);
-  // esc4.write(maxSpeed);
+  esc1.writeMicroseconds(maxSpeed);
+  esc2.writeMicroseconds(maxSpeed);
+  esc3.writeMicroseconds(maxSpeed);
+  esc4.writeMicroseconds(maxSpeed);
 
-  // delay(7000);
+  delay(5000);
 
   // min
   esc1.writeMicroseconds(minSpeed);
@@ -70,7 +69,7 @@ void initializeESC()
   esc3.writeMicroseconds(minSpeed);
   esc4.writeMicroseconds(minSpeed);
 
-  delay(7000);
+  delay(5000);
 }
 
 
