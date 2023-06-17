@@ -4,6 +4,8 @@
 #define pinESC4 11
 #include <Servo.h>
 #include <SoftwareSerial.h>
+#include <Wire.h>
+#include <MPU6050.h>
 
 Servo esc1;
 Servo esc2;
@@ -11,6 +13,8 @@ Servo esc3;
 Servo esc4;
 
 SoftwareSerial AT09(0, 1);
+
+MPU6050 mpu;
 
 int minSpeed = 1000;
 int maxSpeed = 2000;
@@ -23,9 +27,18 @@ bool started = false;
 int specialSpeed = minSpeed;
 char speedsArray[] = "1000,1000,1000,1000";
 
+class Vector3D {
+public:
+  float x;
+  float y;
+  float z;
+};
+
 void setup() {
   Serial.begin(250000);
   AT09.begin(9600);
+  Wire.begin();
+  mpu.initialize();
   initializeESC();
 }
 
@@ -33,6 +46,7 @@ void loop() {
   readBluetooth();
   if (started)
   {
+    stabilizeFlight();
     updateEscSpeed();
   }
 }
@@ -64,11 +78,13 @@ void readBluetooth()
         fourthSpeed = atoi(str);
       i++;
     }
-
-    // Serial.println(firstSpeed);
-    // Serial.println(secondSpeed);
-    // Serial.println(thirdSpeed);
-    // Serial.println(fourthSpeed);
+    if (firstSpeed == 0 && secondSpeed == 0 && thirdSpeed == 0 && fourthSpeed == 0)
+    {
+      Serial.println("Parada de emergência iniciada");
+      updateEscSpeed();
+      started = false;
+      Serial.println("Parada de emergência finalizada");
+    }
   }
 }
 
@@ -98,6 +114,32 @@ void initializeESC()
   started = true;
 }
 
+void stabilizeFlight()
+{
+  Vector3D acceleration;
+  acceleration.x = mpu.getAccelerationX() / 16384.0; // Divide by sensitivity scale factor
+  acceleration.y = mpu.getAccelerationY() / 16384.0;
+  acceleration.z = mpu.getAccelerationZ() / 16384.0;
+
+  Vector3D gyro;
+  gyro.x = mpu.getRotationX();
+  gyro.y = mpu.getRotationY();
+  gyro.z = mpu.getRotationZ();
+
+  float rollAngle = atan2(acceleration.y, acceleration.z) * 180 / PI;
+  float pitchAngle = atan2(-acceleration.x, sqrt(acceleration.y * acceleration.y + acceleration.z * acceleration.z)) * 180 / PI;
+
+  float rollRate = gyro.x;
+  float pitchRate = gyro.y;
+
+  float rollOutput = map(rollAngle, -90, 90, -500, 500);
+  float pitchOutput = map(pitchAngle, -90, 90, -500, 500);
+
+  firstSpeed += pitchOutput - rollOutput;
+  secondSpeed += pitchOutput + rollOutput;
+  thirdSpeed -= pitchOutput - rollOutput;
+  fourthSpeed -= pitchOutput + rollOutput;
+}
 
 void updateEscSpeed()
 {
